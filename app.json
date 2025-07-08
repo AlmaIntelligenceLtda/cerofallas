@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "cerofallas",
+    "slug": "cerofallas",
+    "version": "1.0.0",
+    "web": {
+      "bundler": "metro",
+      "output": "server",
+      "favicon": "./assets/images/get-started.png"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://uber.cl"
+        }
+      ]
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/images/get-started.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/get-started.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    }
+  }
+}
