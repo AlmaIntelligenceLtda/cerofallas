@@ -50,10 +50,13 @@ export async function POST(req: Request) {
       );
 
       try {
-        const resp = await axios.post(`${PHOTO_SERVER}/fotos/upload.php`, uploadForm, {
-          headers: uploadForm.getHeaders?.() || {},
-          maxBodyLength: Infinity,
-        });
+        const resp = await axios.post(
+          `${PHOTO_SERVER}/fotos/upload.php`,
+          uploadForm,
+          {
+            maxBodyLength: Infinity,
+          }
+        );
 
         const data = resp.data;
         const url = typeof data === "string" ? data : data?.url;
