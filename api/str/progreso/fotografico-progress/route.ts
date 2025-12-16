@@ -45,11 +45,14 @@ export async function POST(req: Request) {
       uploadForm.append("imagen", new Blob([buffer], { type: file.type }), file.name);
 
       try {
-        console.log(`📤 Subiendo "${key}" a ${PHOTO_SERVER}/fotos/upload.php`);
-        const uploadResp = await axios.post(`${PHOTO_SERVER}/fotos/upload.php`, uploadForm, {
-          headers: uploadForm.getHeaders?.() || {},
-          maxBodyLength: Infinity,
-        });
+
+        const uploadResp = await axios.post(
+          `${PHOTO_SERVER}/fotos/upload.php`,
+          uploadForm,
+          {
+            maxBodyLength: Infinity,
+          }
+        );
 
         const url = uploadResp.data;
         console.log(`✅ URL recibida:`, url);
