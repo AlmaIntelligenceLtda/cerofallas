@@ -37,10 +37,13 @@ export async function POST(req: Request) {
             uploadForm.append("imagen", new Blob([buffer], { type: file.type }), file.name);
 
             try {
-                const uploadResp = await axios.post(`${PHOTO_SERVER}/fotos/upload.php`, uploadForm, {
-                    headers: uploadForm.getHeaders?.() || {},
-                    maxBodyLength: Infinity,
-                });
+                const uploadResp = await axios.post(
+                    `${PHOTO_SERVER}/fotos/upload.php`,
+                    uploadForm,
+                    {
+                        maxBodyLength: Infinity,
+                    }
+                );
 
                 const url = uploadResp.data;
                 if (typeof url === "string" && url.startsWith("http")) {
