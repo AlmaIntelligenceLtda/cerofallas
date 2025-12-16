@@ -1,43 +1,38 @@
-import { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Redirect } from "expo-router";
-import { useDriverStore } from "@/store";
-import { ActivityIndicator, View, Image } from "react-native";
-import { images } from "@/constants";
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Image, Alert } from 'react-native';
 
-const Index = () => {
-  const { isSignedIn } = useAuth();
-  const { user, isLoaded } = useUser();
+import { images } from '@/constants';
 
-  const setIsDriver = useDriverStore((state) => state.setIsDriver);
+export default function Index() {
+  const { isLoaded: authLoaded, isSignedIn: authSigned } = useAuth();
+  const { isLoaded: userLoaded, isSignedIn: userSigned, user } = useUser();
+
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded) return; // 👈 aseguramos que Clerk haya terminado de cargar
-
-    if (!isSignedIn) {
-      setRedirectTo("/(auth)/welcome");
+    if (!authLoaded || !userLoaded) {
       return;
     }
 
-    if (!user) return; // 👈 aseguramos que user esté definido
+    if (authSigned && userSigned && user) {
+      setRedirectTo('/(root)/(tabs)/home');
+    } else {
+      setRedirectTo('/(auth)/welcome');
+    }
+  }, [authLoaded, authSigned, userLoaded, userSigned, user && user.id]);
 
-    const isDriverMeta = user.publicMetadata?.isDriver === true;
-
-    setIsDriver(isDriverMeta);
-    setRedirectTo(isDriverMeta ? "/(driver)/(tabs)/home" : "/(root)/(tabs)/home");
-  }, [isLoaded, isSignedIn, user]);
-
+  // Pantalla de carga mientras decidimos a dónde ir
   if (!redirectTo) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Image source={images.icon} className="w-28 h-28 mb-6" />
+      <View className="flex-1 items-center justify-center bg-white">
+        <Image source={images.icon} className="mb-6 h-28 w-28" />
         <ActivityIndicator size="large" color="#852b96" />
       </View>
     );
   }
 
+  // Redirigir a la ruta correcta
   return <Redirect href={redirectTo} />;
-};
-
-export default Index;
+}

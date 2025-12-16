@@ -1,39 +1,59 @@
-import { useEffect, useRef, useState } from "react";
+import { useUser } from '@clerk/clerk-expo';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { useFocusEffect } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
-  Animated,
-  TextInput,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
-import { useUser } from "@clerk/clerk-expo";
-import { fetchAPI } from "@/lib/fetch";
-import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import RNBlobUtil from "react-native-blob-util";
+  Alert,
+  RefreshControl,
+  Pressable,
+} from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const DocumentoCard = ({ item, onPress }: { item: any; onPress: () => void }) => (
+import { fetchAPI } from '@/lib/fetch';
+import {
+  generarHTMLChecklist,
+  generarHTMLCaratula,
+  generarHTMLFotografico,
+  generarHTMLMantenimiento,
+  generarHTMLConectividad,
+} from '@/lib/pdfTemplates';
+
+type Documento = {
+  form_id: number;
+  form_tipo: string;
+  titulo?: string;
+  fecha?: string;
+  estado?: 'listo' | 'pendiente';
+  [key: string]: any;
+};
+
+const DocumentoCard = ({ item, onPress }: { item: Documento; onPress: () => void }) => (
   <TouchableOpacity
-    className="bg-gray-100 rounded-xl p-4 mr-4 w-40 items-center justify-center"
-    onPress={onPress}
-  >
+    className="mr-4 w-40 items-center justify-center rounded-xl bg-gray-100 p-4"
+    onPress={onPress}>
     <View className="relative mb-2">
       <MaterialIcons name="insert-drive-file" size={40} color="#888" />
-      <View className="absolute right-0 bottom-0 bg-white rounded-full p-1">
-        {item.estado === "listo" ? (
+      <View className="absolute bottom-0 right-0 rounded-full bg-white p-1">
+        {item.estado === 'listo' ? (
           <FontAwesome name="check-circle" size={16} color="green" />
         ) : (
           <FontAwesome name="exclamation-circle" size={16} color="orange" />
         )}
       </View>
     </View>
-    <Text className="text-sm font-semibold text-center">
-      {item.titulo ?? item.form_tipo?.toUpperCase() ?? "SIN TÍTULO"}
+    <Text className="text-center text-sm font-semibold">
+      {item.titulo ?? item.form_tipo?.toUpperCase() ?? 'SIN TÍTULO'}
     </Text>
-    <Text className="text-xs text-gray-500 text-center mt-1">{item.fecha}</Text>
+    <Text className="mt-1 text-center text-xs text-gray-500">{item.fecha}</Text>
   </TouchableOpacity>
 );
 
@@ -43,14 +63,14 @@ const SeccionDocumentos = ({
   onPressDocumento,
 }: {
   title: string;
-  data: any[];
-  onPressDocumento: (item: any) => void;
+  data: Documento[];
+  onPressDocumento: (item: Documento) => void;
 }) => (
   <View className="mb-6">
-    <Text className="text-lg font-JakartaBold mb-2 text-sky-600">{title}</Text>
+    <Text className="mb-2 font-JakartaBold text-lg text-sky-600">{title}</Text>
     <FlatList
       data={data}
-      keyExtractor={(item, index) => index.toString()}
+      keyExtractor={(_, index) => index.toString()}
       horizontal
       showsHorizontalScrollIndicator={false}
       renderItem={({ item }) => (
@@ -60,199 +80,223 @@ const SeccionDocumentos = ({
   </View>
 );
 
-const TrabajosListos = () => {
+function construirNombreArchivo(item: Documento): string {
+  // Fecha al formato dd-mm-yyyy
+  const fechaObj = item.fecha ? new Date(item.fecha.split('/').reverse().join('-')) : new Date();
+  const fechaFormateada = `${fechaObj.getDate().toString().padStart(2, '0')}-${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}-${fechaObj.getFullYear()}`;
+
+  switch (item.form_tipo) {
+    case 'conectividad':
+      return `Informe Conectividad ${item.site_name ?? ''} ${item.site_id ?? item.codigo_dueno_estructura ?? ''} ${fechaFormateada}.pdf`;
+
+    case 'mantenimiento':
+      return `Informe Mantenimiento ${item.tipo_mantenimiento ?? ''} ${item.nombre_sitio ?? ''} ${item.codigo_sitio ?? ''} ${fechaFormateada}.pdf`;
+
+    case 'caratula':
+      return `Carátula ${item.site_name ?? ''} ${item.site_id ?? ''} ${fechaFormateada}.pdf`;
+
+    case 'checklist':
+      return `Checklist ${item.nombre ?? ''} ${item.codigo ?? ''} ${fechaFormateada}.pdf`;
+
+    case 'fotografico':
+      return `Registro Fotográfico ${item.site_name ?? ''} ${item.codigo_sitio ?? item.id ?? ''} ${fechaFormateada}.pdf`;
+
+    default:
+      return `Documento ${item.form_tipo ?? ''} ${fechaFormateada}.pdf`;
+  }
+}
+
+const DocumentosScreen = () => {
   const { user } = useUser();
 
-  const [conectividad, setConectividad] = useState([]);
-  const [str, setStr] = useState([]);
-  const [mantenimiento, setMantenimiento] = useState([]);
+  const [conectividad, setConectividad] = useState<Documento[]>([]);
+  const [str, setStr] = useState<Documento[]>([]);
+  const [mantenimiento, setMantenimiento] = useState<Documento[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [documentoSeleccionado, setDocumentoSeleccionado] = useState<any>(null);
-  const [modoEnvio, setModoEnvio] = useState<"correo" | "whatsapp" | null>(null);
-  const [destinatario, setDestinatario] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [documentoSeleccionado, setDocumentoSeleccionado] = useState<Documento | null>(null);
+  const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = ["45%"];
+  const snapPoints = ['45%'];
 
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const descargarDocumento = async (item: any) => {
+  const fetchListos = async () => {
+    if (!user?.id) return;
     try {
-      const { form_id, form_tipo } = item;
-      const fileName = `documento_${form_tipo}_${form_id}.pdf`;
-      const path = `${RNBlobUtil.fs.dirs.DownloadDir}/${fileName}`;
-
-      const res = await fetch(`/(api)/documentos/pdf?form_tipo=${form_tipo}&id=${form_id}`);
-      const blob = await res.blob();
-      const base64 = await blobToBase64(blob);
-
-      await RNBlobUtil.fs.writeFile(path, base64, "base64");
-
-      await RNBlobUtil.android.actionViewIntent(path, "application/pdf"); // opcional
-
-      console.log("✅ Documento guardado en:", path);
-    } catch (err) {
-      console.error("❌ Error al generar y guardar el PDF:", err);
-    }
-  };
-
-  const handleEnviar = async () => {
-    if (!documentoSeleccionado) return;
-
-    const url = `/(api)/documentos/pdf?form_tipo=${documentoSeleccionado.form_tipo}&id=${documentoSeleccionado.form_id}`;
-
-    if (modoEnvio === "whatsapp") {
-      const texto = `Aquí tienes el documento: ${url}`;
-      await Linking.openURL(`whatsapp://send?phone=${destinatario}&text=${encodeURIComponent(texto)}`);
-    } else {
-      await fetchAPI("/(api)/documentos/enviar-correo", {
-        method: "POST",
-        body: JSON.stringify({
-          correo: destinatario,
-          url_pdf: url,
-          asunto: "Documento STR",
-        }),
+      const res = await fetchAPI(`/api/documentos/listos?userId=${user.id}`, {
+        method: 'GET',
       });
+
+      setConectividad(res.conectividad || []);
+      setStr(res.str || []);
+      setMantenimiento(res.mantenimiento || []);
+    } catch (err) {
+      console.error('❌ Error al cargar documentos:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-
-    await fetchAPI("/(api)/documentos/marcar-enviado", {
-      method: "PATCH",
-      body: JSON.stringify({
-        form_id: documentoSeleccionado.form_id,
-        form_tipo: documentoSeleccionado.form_tipo,
-      }),
-    });
-
-    bottomSheetRef.current?.close();
-    setModoEnvio(null);
-    setDestinatario("");
-  };
-
-  const openAcciones = (item: any) => {
-    setDocumentoSeleccionado(item);
-    bottomSheetRef.current?.expand();
   };
 
   useEffect(() => {
-    const fetchListos = async () => {
-      try {
-        if (!user?.id) return;
-        const res = await fetchAPI(`/(api)/documentos/listos?userId=${user.id}`);
-        setConectividad(res.conectividad || []);
-        setStr(res.str || []);
-        setMantenimiento(res.mantenimiento || []);
-      } catch (error) {
-        console.error("Error al cargar trabajos listos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchListos();
   }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setBottomSheetVisible(false);
+      };
+    }, [])
+  );
+
+  const generarPDF = async (item: Documento): Promise<string | null> => {
+    try {
+      let html = '';
+      switch (item.form_tipo) {
+        case 'caratula':
+          console.log('item caratula: ', item);
+          html = generarHTMLCaratula(item);
+          break;
+        case 'checklist':
+          console.log('item checklist: ', item);
+          html = generarHTMLChecklist(item);
+          break;
+        case 'fotografico':
+          console.log('item fotografico: ', item);
+          html = generarHTMLFotografico(item);
+          break;
+        case 'mantenimiento':
+          console.log('item mantenimiento: ', item);
+          html = generarHTMLMantenimiento(item);
+          break;
+        case 'conectividad':
+          console.log('item conectividad: ', item);
+          html = generarHTMLConectividad(item);
+          break;
+        default:
+          html = `<html><body><h1>Documento sin plantilla</h1></body></html>`;
+      }
+
+      const { uri } = await Print.printToFileAsync({ html });
+      const fileName = construirNombreArchivo(item);
+      const filePath = FileSystem.documentDirectory + fileName;
+      await FileSystem.moveAsync({ from: uri, to: filePath });
+      return filePath;
+    } catch (err) {
+      console.error('❌ Error al generar PDF:', err);
+      Alert.alert('Error', 'No se pudo generar el PDF.');
+      return null;
+    }
+  };
+
+  const openAcciones = (item: Documento) => {
+    setDocumentoSeleccionado(item);
+    setBottomSheetVisible(true);
+  };
+
+  const closeBottomSheet = () => {
+    setBottomSheetVisible(false);
+  };
+
+  const handleSheetClose = () => {
+    setBottomSheetVisible(false);
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView className="flex-1 bg-white px-5 pt-5">
-        <Text className="text-2xl font-JakartaBold mb-5">Documentos</Text>
+        <Text className="mb-5 font-JakartaBold text-2xl">Documentos</Text>
 
         {loading ? (
-          <Text className="text-center text-gray-500 mt-10">Cargando documentos...</Text>
+          <Text className="mt-10 text-center text-gray-500">Cargando documentos...</Text>
         ) : (
-          <>
-            <SeccionDocumentos
-              title="📡 Conectividad PCC a TDA y F"
-              data={conectividad}
-              onPressDocumento={openAcciones}
-            />
-            <SeccionDocumentos
-              title="📄 Site Technical Report (STR)"
-              data={str}
-              onPressDocumento={openAcciones}
-            />
-            <SeccionDocumentos
-              title="🛠️ Mantenimiento Preventivo"
-              data={mantenimiento}
-              onPressDocumento={openAcciones}
-            />
-          </>
+          <FlatList
+            ListHeaderComponent={
+              <>
+                <SeccionDocumentos
+                  title="📡 Conectividad PCC a TDA y F"
+                  data={conectividad}
+                  onPressDocumento={openAcciones}
+                />
+                <SeccionDocumentos
+                  title="📄 Site Technical Report (STR)"
+                  data={str}
+                  onPressDocumento={openAcciones}
+                />
+                <SeccionDocumentos
+                  title="🛠️ Mantenimiento Preventivo"
+                  data={mantenimiento}
+                  onPressDocumento={openAcciones}
+                />
+              </>
+            }
+            data={[]} // vacío porque solo usamos ListHeaderComponent
+            renderItem={null}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => {
+                  setRefreshing(true);
+                  fetchListos();
+                }}
+              />
+            }
+          />
         )}
 
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          enablePanDownToClose
-        >
-          <BottomSheetScrollView contentContainerStyle={{ paddingHorizontal: 20 }}>
-            <Text className="text-lg font-bold mb-4 text-center">
-              ¿Qué deseas hacer con este documento?
-            </Text>
-
-            <TouchableOpacity
-              className="mb-3 bg-sky-500 p-3 rounded-lg"
-              onPress={() => {
-                if (documentoSeleccionado) {
-                  descargarDocumento(documentoSeleccionado);
-                  bottomSheetRef.current?.close();
-                }
+        {bottomSheetVisible && (
+          <>
+            {/* Fondo táctil para cerrar el BottomSheet */}
+            <Pressable
+              onPress={closeBottomSheet}
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: 'rgba(0,0,0,0.3)',
               }}
-            >
-              <Text className="text-white text-center">📥 Descargar documento</Text>
-            </TouchableOpacity>
+            />
+            <BottomSheet
+              ref={bottomSheetRef}
+              index={0}
+              snapPoints={snapPoints}
+              enablePanDownToClose
+              onChange={(index) => {
+                if (index === -1) {
+                  handleSheetClose();
+                }
+              }}>
+              <BottomSheetScrollView contentContainerStyle={{ paddingHorizontal: 20 }}>
+                <Text className="mb-4 text-center text-lg font-bold">Generar documento</Text>
 
-            <TouchableOpacity
-              className="mb-3 bg-green-500 p-3 rounded-lg"
-              onPress={() => setModoEnvio("whatsapp")}
-            >
-              <Text className="text-white text-center">💬 Enviar por WhatsApp</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="mb-3 bg-blue-500 p-3 rounded-lg"
-              onPress={() => setModoEnvio("correo")}
-            >
-              <Text className="text-white text-center">📧 Enviar por Correo</Text>
-            </TouchableOpacity>
-
-            {modoEnvio && (
-              <>
-                <TextInput
-                  className="border border-gray-300 rounded-md px-4 py-2 mt-4 mb-2"
-                  value={destinatario}
-                  onChangeText={setDestinatario}
-                  keyboardType={modoEnvio === "correo" ? "email-address" : "phone-pad"}
-                  placeholder={
-                    modoEnvio === "correo"
-                      ? "ej: cliente@correo.com"
-                      : "ej: +56912345678"
-                  }
-                />
-                <TouchableOpacity className="bg-sky-600 p-3 rounded-md" onPress={handleEnviar}>
-                  <Text className="text-white text-center font-bold">Enviar</Text>
+                <TouchableOpacity
+                  className="mb-3 rounded-lg bg-sky-500 p-3"
+                  onPress={async () => {
+                    if (documentoSeleccionado) {
+                      const filePath = await generarPDF(documentoSeleccionado);
+                      if (filePath && (await Sharing.isAvailableAsync())) {
+                        await Sharing.shareAsync(filePath);
+                      }
+                    }
+                  }}>
+                  <Text className="text-center text-white">📄 Generar PDF local</Text>
                 </TouchableOpacity>
-              </>
-            )}
 
-            <TouchableOpacity
-              className="mt-5 border border-gray-300 p-2 rounded-md"
-              onPress={() => bottomSheetRef.current?.close()}
-            >
-              <Text className="text-center text-gray-500">Cancelar</Text>
-            </TouchableOpacity>
-          </BottomSheetScrollView>
-        </BottomSheet>
+                <TouchableOpacity
+                  className="mt-5 rounded-md border border-gray-300 p-2"
+                  onPress={closeBottomSheet}>
+                  <Text className="text-center text-gray-500">Cancelar</Text>
+                </TouchableOpacity>
+              </BottomSheetScrollView>
+            </BottomSheet>
+          </>
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );
 };
 
-export default TrabajosListos;
+export default DocumentosScreen;

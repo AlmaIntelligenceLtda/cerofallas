@@ -1,75 +1,43 @@
-import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ably } from "@/lib/ably";
-import { DriverStore, LocationStore, MarkerData } from "@/types/type";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { persistStore, persistReducer } from 'redux-persist';
 
-export const useLocationStore = create<LocationStore>((set) => ({
-  userLatitude: null,
-  userLongitude: null,
-  userAddress: null,
-  destinationLatitude: null,
-  destinationLongitude: null,
-  destinationAddress: null,
+// Importar los reducers
+import authReducer from './authSlice'; // Reducer de autenticación
+import conectividadReducer from './conectividadSlice';
+import mantenimientoReducer from './mantenimientoSlice';
+import strReducer from './strSlice';
 
-  // ✅ NUEVO: tipo de grúa
-  truckType: null,
-  setTruckType: (type: string) => set(() => ({ truckType: type })),
+// Combinamos todos los reducers
+const rootReducer = combineReducers({
+  auth: authReducer, // Reducer para la autenticación
+  str: strReducer,
+  conectividad: conectividadReducer,
+  mantenimiento: mantenimientoReducer,
+});
 
-  setUserLocation: ({ latitude, longitude, address }) => {
-    set(() => ({
-      userLatitude: latitude,
-      userLongitude: longitude,
-      userAddress: address,
-    }));
+// Configuración de persistencia
+const persistConfig = {
+  key: 'root',
+  storage: AsyncStorage,
+  whitelist: ['auth', 'str', 'conectividad', 'mantenimiento'], // Reducers a persistir
+};
 
-    const { selectedDriver, clearSelectedDriver } = useDriverStore.getState();
-    if (selectedDriver) clearSelectedDriver();
-  },
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-  setDestinationLocation: ({ latitude, longitude, address }) => {
-    set(() => ({
-      destinationLatitude: latitude,
-      destinationLongitude: longitude,
-      destinationAddress: address,
-    }));
+// Configuración del store
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+});
 
-    const { selectedDriver, clearSelectedDriver } = useDriverStore.getState();
-    if (selectedDriver) clearSelectedDriver();
-  },
-}));
+export const persistor = persistStore(store);
 
-
-export const useDriverStore = create<DriverStore>((set, get) => ({
-  drivers: [] as MarkerData[],
-  selectedDriver: null,
-  isDriver: false, // Estado que indica si es conductor
-  isAvailable: false, // Estado de disponibilidad
-
-  setSelectedDriver: (driverId: number) => set(() => ({ selectedDriver: driverId })),
-
-  setDrivers: (drivers: MarkerData[]) => set(() => ({ drivers })),
-
-  clearSelectedDriver: () => set(() => ({ selectedDriver: null })),
-
-  setIsDriver: (value: boolean) => set(() => ({ isDriver: value })),
-
-  // Nueva acción para manejar la disponibilidad (sin Ably)
-  toggleAvailable: async () => {
-    const { isAvailable } = get();
-    const newState = !isAvailable;
-
-    set({ isAvailable: newState });
-    console.log(`Estado de disponibilidad cambiado a: ${newState ? "Conectado" : "Desconectado"}`);
-
-    // Guardamos la disponibilidad en AsyncStorage
-    await AsyncStorage.setItem("driver-availability", JSON.stringify(newState));
-  },
-
-  // Inicializamos la disponibilidad del conductor desde AsyncStorage
-  initAvailability: async () => {
-    const stored = await AsyncStorage.getItem("driver-availability");
-    if (stored === "true") {
-      set({ isAvailable: true });
-    }
-  },
-}));
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

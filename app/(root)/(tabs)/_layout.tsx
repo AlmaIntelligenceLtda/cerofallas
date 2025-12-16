@@ -1,18 +1,18 @@
-import { Tabs } from "expo-router";
-import { icons } from "@/constants";
-import { Image } from "react-native";
+import { Tabs } from 'expo-router';
+import { Image } from 'react-native';
+
+import { icons } from '@/constants';
 
 export default function Layout() {
   return (
     <Tabs
       initialRouteName="home"
       screenOptions={{
-        tabBarActiveTintColor: "#3da0e2", // Íconos morados cuando están activos
-        tabBarInactiveTintColor: "gray", // Íconos grises cuando no están activos
+        tabBarActiveTintColor: '#3da0e2', // Íconos morados cuando están activos
+        tabBarInactiveTintColor: 'gray', // Íconos grises cuando no están activos
         tabBarShowLabel: false,
         headerShown: false,
-      }}
-    >
+      }}>
       <Tabs.Screen
         name="home"
         options={{

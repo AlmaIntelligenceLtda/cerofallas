@@ -1,4 +1,4 @@
-import { Ride } from "@/types/type";
+import { Ride } from '@/types/type';
 
 export const sortRides = (rides: Ride[]): Ride[] => {
   const result = rides.sort((a, b) => {
@@ -26,22 +26,21 @@ export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   const day = date.getDate();
   const monthNames = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
-  return `${day < 10 ? "0" + day : day} ${month} ${year}`;
+  return `${day < 10 ? '0' + day : day} ${month} ${year}`;
 }

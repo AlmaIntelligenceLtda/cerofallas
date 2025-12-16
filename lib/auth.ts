@@ -1,7 +1,7 @@
-import * as Linking from "expo-linking";
-import * as SecureStore from "expo-secure-store";
+import * as Linking from 'expo-linking';
+import * as SecureStore from 'expo-secure-store';
 
-import { fetchAPI } from "@/lib/fetch";
+import { fetchAPI } from '@/lib/fetch';
 
 export const tokenCache = {
   async getToken(key: string) {
@@ -10,11 +10,11 @@ export const tokenCache = {
       if (item) {
         console.log(`${key} was used 🔐 \n`);
       } else {
-        console.log("No values stored under key: " + key);
+        console.log('No values stored under key: ' + key);
       }
       return item;
     } catch (error) {
-      console.error("SecureStore get item error: ", error);
+      console.error('SecureStore get item error: ', error);
       await SecureStore.deleteItemAsync(key);
       return null;
     }
@@ -22,16 +22,14 @@ export const tokenCache = {
   async saveToken(key: string, value: string) {
     try {
       return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
+    } catch (err) {}
   },
 };
 
 export const googleOAuth = async (startOAuthFlow: any) => {
   try {
     const { createdSessionId, setActive, signUp } = await startOAuthFlow({
-      redirectUrl: Linking.createURL("/"), // 👈 redirige siempre al index
+      redirectUrl: Linking.createURL('/'), // 👈 redirige siempre al index
     });
 
     if (createdSessionId && setActive) {
@@ -39,8 +37,8 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 
       // Solo si es un usuario recién creado
       if (signUp.createdUserId) {
-        await fetchAPI("/(api)/user", {
-          method: "POST",
+        await fetchAPI('/api/user', {
+          method: 'POST',
           body: JSON.stringify({
             name: `${signUp.firstName} ${signUp.lastName}`,
             email: signUp.emailAddress,
@@ -51,21 +49,21 @@ export const googleOAuth = async (startOAuthFlow: any) => {
 
       return {
         success: true,
-        code: "success",
-        message: "Sesión iniciada correctamente",
+        code: 'success',
+        message: 'Sesión iniciada correctamente',
       };
     }
 
     return {
       success: false,
-      message: "No se pudo completar el inicio de sesión con Microsoft",
+      message: 'No se pudo completar el inicio de sesión con Google',
     };
   } catch (err: any) {
     console.error(err);
     return {
       success: false,
       code: err.code,
-      message: err?.errors?.[0]?.longMessage || "Error desconocido",
+      message: err?.errors?.[0]?.longMessage || 'Error desconocido',
     };
   }
 };

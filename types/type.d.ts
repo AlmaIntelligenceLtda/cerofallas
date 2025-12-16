@@ -1,4 +1,4 @@
-import { TextInputProps, TouchableOpacityProps } from "react-native";
+import { TextInputProps, TouchableOpacityProps } from 'react-native';
 
 export interface Driver {
   id: number;
@@ -8,13 +8,13 @@ export interface Driver {
   max_weight_capacity: number;
   license_front_url: string;
   license_back_url: string;
-  cedula_front_url: string;  // Actualizado
-  cedula_back_url: string;   // Actualizado
+  cedula_front_url: string; // Actualizado
+  cedula_back_url: string; // Actualizado
   profile_image_url?: string;
   rating?: number;
   current_latitude: number;
   current_longitude: number;
-  rut_number: string;  // Nuevo campo para el RUT
+  rut_number: string; // Nuevo campo para el RUT
 }
 
 export interface MarkerData {
@@ -62,8 +62,8 @@ export interface Ride {
 
 export interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  bgVariant?: "primary" | "secondary" | "danger" | "outline" | "success";
-  textVariant?: "primary" | "default" | "secondary" | "danger" | "success";
+  bgVariant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'success';
+  textVariant?: 'primary' | 'default' | 'secondary' | 'danger' | 'success';
   IconLeft?: React.ComponentType<any>;
   IconRight?: React.ComponentType<any>;
   className?: string;
@@ -137,7 +137,7 @@ export interface LocationStore {
 
 export interface DriverStore {
   drivers: MarkerData[];
-  selectedDriver: string | null;  // Permite ser string o null
+  selectedDriver: string | null; // Permite ser string o null
   setSelectedDriver: (driverId: string | null) => void; // Cambiado para aceptar null
   setDrivers: (drivers: MarkerData[]) => void;
   clearSelectedDriver: () => void;

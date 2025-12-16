@@ -2,7 +2,9 @@
   "expo": {
     "name": "cerofallas",
     "slug": "cerofallas",
+    "owner": "almaintelligence",
     "version": "1.0.0",
+    "scheme": "cerofallas",
     "web": {
       "bundler": "metro",
       "output": "server",
@@ -15,9 +17,20 @@
       [
         "expo-router",
         {
-          "origin": "https://uber.cl"
+          "origin": "http://165.227.14.82"
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "orientation": "portrait",
     "icon": "./assets/images/get-started.png",
@@ -37,6 +50,15 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.alma10.cerofallas"
+    },
+    "extra": {
+      "router": {
+        "origin": "http://165.227.14.82"
+      },
+      "eas": {
+        "projectId": "b8394046-5b26-4401-8dd9-1cdedf4882ce"
       }
     }
   }

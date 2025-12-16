@@ -1,4 +1,4 @@
-import { Driver, MarkerData } from "@/types/type";
+import { Driver, MarkerData } from '@/types/type';
 
 /**
  * Genera marcadores de mapa basados en la ubicación real de los conductores.
@@ -20,14 +20,14 @@ export function generateMarkersFromData({
     title:
       driver.truck_type && driver.truck_model
         ? `${driver.truck_type} (${driver.truck_model})`
-        : "Grúa disponible",
-    profile_image_url: driver.profile_image_url || "",
+        : 'Grúa disponible',
+    profile_image_url: driver.profile_image_url || '',
     rating: driver.rating ?? 0,
     max_weight_capacity: driver.max_weight_capacity ?? 0,
     price: driver.price, // puedes dejarlo si ya viene desde el backend
-    time: driver.time,   // puedes dejarlo si ya viene desde el backend
+    time: driver.time, // puedes dejarlo si ya viene desde el backend
     distance: driver.distance,
-    car_image_url: driver.car_image_url || "",
+    car_image_url: driver.car_image_url || '',
   }));
 }
 
@@ -101,13 +101,7 @@ export const calculateDriverTimes = async ({
   destinationLatitude: number | null;
   destinationLongitude: number | null;
 }) => {
-  if (
-    !userLatitude ||
-    !userLongitude ||
-    !destinationLatitude ||
-    !destinationLongitude
-  )
-    return;
+  if (!userLatitude || !userLongitude || !destinationLatitude || !destinationLongitude) return;
 
   try {
     const tarifaBase = 20000; // CLP
@@ -127,10 +121,8 @@ export const calculateDriverTimes = async ({
         `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`
       );
       const dataToDestination = await responseToDestination.json();
-      const distanceToDestination =
-        dataToDestination.routes[0].legs[0].distance.value;
-      const timeToDestination =
-        dataToDestination.routes[0].legs[0].duration.value;
+      const distanceToDestination = dataToDestination.routes[0].legs[0].distance.value;
+      const timeToDestination = dataToDestination.routes[0].legs[0].duration.value;
 
       // Distancia total y tiempo estimado
       const totalDistanceKm = (distanceToUser + distanceToDestination) / 1000;
@@ -147,6 +139,6 @@ export const calculateDriverTimes = async ({
 
     return await Promise.all(timesPromises);
   } catch (error) {
-    console.error("Error calculating driver times and prices:", error);
+    console.error('Error calculating driver times and prices:', error);
   }
 };

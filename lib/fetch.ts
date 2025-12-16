@@ -1,55 +1,66 @@
-// fetch.ts
-import { useState, useEffect, useCallback } from "react";
+import Constants from 'expo-constants';
+import { useState, useEffect, useCallback } from 'react';
 
-//para incertar
+// Base URL dinámica desde .env
+const BASE_URL = 'http://165.227.14.82';
 
-export const fetchAPI = async (url: string, options?: RequestInit) => {
+// Validación opcional
+if (!BASE_URL) {
+  console.warn('⚠️ BASE_URL no está definida. Verifica EXPO_PUBLIC_SERVER_URL en .env');
+}
+
+// 🔁 Genérico para JSON
+export const fetchAPI = async (path: string, options?: RequestInit) => {
+  const url = `${BASE_URL}${path}`;
   try {
-    console.log("[fetchAPI] Fetching URL:", url, "Options:", options);
-    const response = await fetch(url, options);
-    console.log("[fetchAPI] Response status:", response.status);
+    console.log('[fetchAPI] Fetching URL:', url, 'Options:', options);
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options?.headers || {}),
+      },
+    });
+
+    console.log('[fetchAPI] Response status:', response.status);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const text = await response.text();
+      throw new Error(`HTTP error ${response.status}: ${text}`);
     }
 
     const json = await response.json();
-    console.log("[fetchAPI] Response JSON:", json);
+    console.log('[fetchAPI] Response JSON:', json);
     return json;
   } catch (error) {
-    console.error("[fetchAPI] Fetch error:", error);
+    console.error('[fetchAPI] Fetch error:', error);
     throw error;
   }
 };
 
-//para traer 
+// 🖼 Para subir imágenes y FormData
+export const fetchFormAPI = async (path: string, formData: FormData) => {
+  const url = `${BASE_URL}${path}`;
+  try {
+    console.log('[fetchFormAPI] Subiendo archivos a:', url);
 
-export const useFetch = <T>(url: string, options?: RequestInit) => {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData, // importante: no agregar headers aquí
+    });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    console.log("[useFetch] Starting fetch for:", url);
+    console.log('[fetchFormAPI] Código de respuesta:', response.status);
 
-    try {
-      const result = await fetchAPI(url, options);
-      console.log("[useFetch] Result received:", result);
-      setData(result.data);
-    } catch (err) {
-      console.error("[useFetch] Error caught:", err);
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-      console.log("[useFetch] Fetch finished");
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error HTTP: ${response.status} - ${text}`);
     }
-  }, [url, options]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refetch: fetchData };
+    const json = await response.json();
+    console.log('[fetchFormAPI] Respuesta JSON:', json);
+    return json;
+  } catch (error) {
+    console.error('[fetchFormAPI] Error en la subida:', error);
+    throw error;
+  }
 };
