@@ -1,69 +1,54 @@
-import { NextResponse } from 'next/server';
-import { IncomingForm } from 'formidable';
+import express from 'express';
+import formidable from 'formidable';
 import fs from 'fs';
 import { createCanvas, loadImage } from 'canvas';
 
-export const config = {
-  api: {
-    bodyParser: false
-  }
-};
+const app = express();
 
-export async function POST(req: Request) {
-  // Parsear formData con formidable
-  const data: any = await new Promise((resolve, reject) => {
-    const form = new IncomingForm();
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
-    });
+app.post('/api/imagenes/estampar', (req, res) => {
+  const form = new formidable.IncomingForm();
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const file = files.image;
+    const text = fields.text;
+    if (!file || !text) return res.status(400).json({ error: 'Missing image or text' });
+
+    try {
+      const buffer = fs.readFileSync(file.filepath);
+      const image = await loadImage(buffer);
+      const width = image.width;
+      const height = image.height;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext('2d');
+
+      // Dibujar imagen
+      ctx.drawImage(image, 0, 0, width, height);
+
+      // Rectángulo negro
+      const stampHeight = Math.min(170, height);
+      const rectY = height - stampHeight;
+      const padding = 10;
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(padding, rectY, width - padding * 2, stampHeight);
+      ctx.globalAlpha = 1;
+
+      // Texto
+      ctx.fillStyle = '#fff';
+      ctx.font = '20px monospace';
+      ctx.textBaseline = 'top';
+      const lines = text.split('\n');
+      const lineHeight = 22;
+      lines.forEach((line, i) => ctx.fillText(line, padding * 2, rectY + padding + i * lineHeight));
+
+      const output = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+      res.set('Content-Type', 'image/jpeg');
+      res.send(output);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
+});
 
-  const file = data.files?.image;
-  const text = data.fields?.text;
-
-  if (!file || !text) {
-    return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
-  }
-
-  // Leer archivo a Buffer
-  const buffer = fs.readFileSync(file.filepath);
-
-  const image = await loadImage(buffer);
-  const width = image.width;
-  const height = image.height;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-
-  // Dibujar imagen base
-  ctx.drawImage(image, 0, 0, width, height);
-
-  // Rectángulo negro semi-transparente
-  const stampHeight = Math.min(170, height);
-  const rectY = height - stampHeight;
-  const padding = 10;
-
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(padding, rectY, width - padding * 2, stampHeight);
-  ctx.globalAlpha = 1;
-
-  // Texto
-  ctx.fillStyle = '#fff';
-  ctx.font = '20px monospace';
-  ctx.textBaseline = 'top';
-
-  const lines = text.split('\n');
-  const lineHeight = 22;
-  lines.forEach((line, i) => {
-    const y = rectY + padding + i * lineHeight;
-    ctx.fillText(line, padding * 2, y);
-  });
-
-  const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
-
-  return new NextResponse(outputBuffer, {
-    status: 200,
-    headers: { 'Content-Type': 'image/jpeg' },
-  });
-}
+app.listen(3001, () => console.log('Server listening on port 3001'));
