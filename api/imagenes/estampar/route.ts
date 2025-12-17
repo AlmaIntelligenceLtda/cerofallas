@@ -3,12 +3,8 @@ import fs from 'fs';
 import { createCanvas, loadImage } from 'canvas';
 import { NextResponse } from 'next/server';
 
-export const routeSegmentConfig = {
-  runtime: 'nodejs',
-  bodyParser: false,
-};
-
 export async function POST(req: Request) {
+  // Parsear formData
   const data: any = await new Promise((resolve, reject) => {
     const form = new IncomingForm();
     form.parse(req, (err, fields, files) => {
@@ -19,24 +15,41 @@ export async function POST(req: Request) {
 
   const file = data.files?.image;
   const text = data.fields?.text;
-  if (!file || !text) return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
 
+  if (!file || !text) {
+    return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
+  }
+
+  // Leer archivo
   const buffer = fs.readFileSync(file.filepath);
   const image = await loadImage(buffer);
+
   const canvas = createCanvas(image.width, image.height);
   const ctx = canvas.getContext('2d');
 
+  // Dibujar imagen base
   ctx.drawImage(image, 0, 0);
-  ctx.fillStyle = '#000';
+
+  // Rectángulo negro semi-transparente
+  const stampHeight = Math.min(170, image.height);
+  const rectY = image.height - stampHeight;
+  const padding = 10;
   ctx.globalAlpha = 0.6;
-  ctx.fillRect(10, image.height - 170, image.width - 20, 160);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(padding, rectY, image.width - padding * 2, stampHeight);
   ctx.globalAlpha = 1;
+
+  // Texto
   ctx.fillStyle = '#fff';
   ctx.font = '20px monospace';
   ctx.textBaseline = 'top';
-  text.split('\n').forEach((line, i) => ctx.fillText(line, 20, image.height - 160 + i * 22));
+  const lines = text.split('\n');
+  const lineHeight = 22;
+  lines.forEach((line, i) => ctx.fillText(line, padding * 2, rectY + padding + i * lineHeight));
 
-  return new NextResponse(canvas.toBuffer('image/jpeg'), {
+  const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+
+  return new NextResponse(outputBuffer, {
     status: 200,
     headers: { 'Content-Type': 'image/jpeg' },
   });
