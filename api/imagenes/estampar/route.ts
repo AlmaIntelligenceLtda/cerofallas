@@ -1,18 +1,17 @@
 import formidable from 'formidable';
 import { createCanvas, loadImage } from 'canvas';
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import { RouteSegmentConfig } from 'next';
 
-export const routeSegmentConfig: RouteSegmentConfig = {
-    api: { bodyParser: false },
-};
+// Deshabilitar el parseo de body nativo de Next.js (no usamos bodyParser)
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     const form = new formidable.IncomingForm();
 
+    // formidable requiere Node.js request, NextRequest tiene un readable stream
+    const reqBuffer = Buffer.from(await req.arrayBuffer());
     const data = await new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
+        form.parse({ headers: req.headers, ...req }, (err, fields, files) => {
             if (err) reject(err);
             else resolve({ fields, files });
         });
