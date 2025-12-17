@@ -2,16 +2,14 @@ import formidable from 'formidable';
 import { createCanvas, loadImage } from 'canvas';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Deshabilitar el parseo de body nativo de Next.js (no usamos bodyParser)
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     const form = new formidable.IncomingForm();
 
-    // formidable requiere Node.js request, NextRequest tiene un readable stream
-    const reqBuffer = Buffer.from(await req.arrayBuffer());
+    // formidable parse espera Node.js request, usamos req.body como stream
     const data = await new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-        form.parse({ headers: req.headers, ...req }, (err, fields, files) => {
+        form.parse(req as any, (err, fields, files) => {
             if (err) reject(err);
             else resolve({ fields, files });
         });
@@ -49,9 +47,11 @@ export async function POST(req: NextRequest) {
             ctx.fillText(line, 20, height - 170 + i * 36);
         });
 
+        // Convertir Buffer a Uint8Array para NextResponse
         const buffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+        const arrayBuffer = Uint8Array.from(buffer).buffer;
 
-        return new NextResponse(buffer, {
+        return new NextResponse(arrayBuffer, {
             status: 200,
             headers: { 'Content-Type': 'image/jpeg' },
         });
