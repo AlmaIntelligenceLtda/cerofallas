@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         );
 
         try {
-          const resp = await axios.post(`${PHOTO_SERVER}/fotos/upload.php`, uploadForm, {
+          const resp = await axios.post(`${PHOTO_SERVER}/api/fotos/upload`, uploadForm, {
             headers: typeof (uploadForm as any).getHeaders === "function"
               ? (uploadForm as any).getHeaders()
               : {},

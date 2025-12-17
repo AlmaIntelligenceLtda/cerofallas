@@ -38,7 +38,7 @@ const OAuth = () => {
     <View>
       <View className="mt-4 flex flex-row items-center justify-center gap-x-3">
         <View className="h-[1px] flex-1 bg-general-100" />
-        <Text className="text-lg">O inicia con Google</Text>
+        <Text className="text-lg">Inicia con Google</Text>
         <View className="h-[1px] flex-1 bg-general-100" />
       </View>
 

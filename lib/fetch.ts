@@ -1,8 +1,5 @@
-import Constants from 'expo-constants';
-import { useState, useEffect, useCallback } from 'react';
-
-// Base URL dinámica desde .env
-const BASE_URL = 'http://165.227.14.82';
+const BASE_URL =
+  "http://165.227.14.82:3000"; // fallback dev
 
 // Validación opcional
 if (!BASE_URL) {

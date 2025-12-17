@@ -1,0 +1,57 @@
+*** Begin Patch
+*** Update File: node_modules/@react-native-community/clipboard/android/src/main/java/com/reactnativecommunity/clipboard/ClipboardModule.java
+@@
+-package com.reactnativecommunity.clipboard;
+-
+-import android.content.ClipboardManager;
+-import android.content.ClipData;
+-import android.content.Context;
+-
+-import com.facebook.react.bridge.ContextBaseJavaModule;
+-import com.facebook.react.bridge.ReactMethod;
+-import com.facebook.react.bridge.Promise;
+-import com.facebook.react.module.annotations.ReactModule;
++package com.reactnativecommunity.clipboard;
++
++import android.content.ClipboardManager;
++import android.content.ClipData;
++import android.content.Context;
++
++import com.facebook.react.bridge.ReactApplicationContext;
++import com.facebook.react.bridge.ReactContextBaseJavaModule;
++import com.facebook.react.bridge.ReactMethod;
++import com.facebook.react.bridge.Promise;
++import com.facebook.react.module.annotations.ReactModule;
+@@
+-public class ClipboardModule extends ContextBaseJavaModule {
+-
+-  public ClipboardModule(Context context) {
+*** Begin Patch
+*** Update File: node_modules/@react-native-community/clipboard/android/src/main/java/com/reactnativecommunity/clipboard/ClipboardModule.java
+@@
+-package com.reactnativecommunity.clipboard;
++package com.reactnativecommunity.clipboard;
++
++import android.content.ClipboardManager;
++import android.content.ClipData;
++import android.content.Context;
++
++import com.facebook.react.bridge.ReactApplicationContext;
++import com.facebook.react.bridge.ReactContextBaseJavaModule;
++import com.facebook.react.bridge.ReactMethod;
++import com.facebook.react.bridge.Promise;
++import com.facebook.react.module.annotations.ReactModule;
+@@
+-public class ClipboardModule extends ContextBaseJavaModule {
++public class ClipboardModule extends ReactContextBaseJavaModule {
++
++  public ClipboardModule(ReactApplicationContext reactContext) {
++    super(reactContext);
++  }
+@@
+-  private ClipboardManager getClipboardService() {
++  private ClipboardManager getClipboardService() {
++    Context ctx = getReactApplicationContext();
++    return (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
++  }
+*** End Patch

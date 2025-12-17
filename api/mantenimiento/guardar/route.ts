@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
       try {
         const resp = await axios.post(
-          `${PHOTO_SERVER}/fotos/upload.php`,
+          `${PHOTO_SERVER}/api/fotos/upload`,
           uploadForm,
           {
             maxBodyLength: Infinity,

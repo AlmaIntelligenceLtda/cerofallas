@@ -2,7 +2,7 @@
   "expo": {
     "name": "cerofallas",
     "slug": "cerofallas",
-    "owner": "almaintelligence",
+    "owner": "almaintelligenceltda",
     "version": "1.0.0",
     "scheme": "cerofallas",
     "web": {
@@ -58,7 +58,7 @@
         "origin": "http://165.227.14.82"
       },
       "eas": {
-        "projectId": "b8394046-5b26-4401-8dd9-1cdedf4882ce"
+        "projectId": "021d724c-e906-4eac-9ff7-6672c77575dd"
       }
     }
   }
