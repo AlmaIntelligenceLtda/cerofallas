@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
 
     const width = image.width;
     const height = image.height;
-    console.log('Image width:', width, 'height:', height);
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -36,18 +35,16 @@ export async function POST(req: NextRequest) {
     ctx.fillStyle = '#000';
     ctx.fillRect(10, rectY, width - 20, stampHeight);
     ctx.globalAlpha = 1;
-    console.log('Drew rect at', rectY, 'height', stampHeight);
 
     ctx.fillStyle = '#fff';
-    ctx.font = '32px sans-serif';
+    ctx.font = '20px sans-serif';
     ctx.textBaseline = 'top';
 
     const lines = text.split('\n');
-    console.log('Lines:', lines);
+    const lineHeight = 22;
     lines.forEach((line, i) => {
-      const y = textStartY + i * 36;
+      const y = textStartY + i * lineHeight;
       ctx.fillText(line, 20, y);
-      console.log('Drew line', i, 'at y=', y, 'text:', line);
     });
     console.log('Finished drawing text');
 
