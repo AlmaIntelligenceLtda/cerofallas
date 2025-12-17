@@ -12,10 +12,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
   }
 
-  console.log('Text received:', text);
-
   try {
-    // Convert File to Buffer
+    // Convertir File a Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const image = await loadImage(buffer);
@@ -25,30 +23,35 @@ export async function POST(req: NextRequest) {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
+    // Dibujar imagen base
     ctx.drawImage(image, 0, 0, width, height);
 
-    const stampHeight = 170;
-    const textStartY = height >= stampHeight ? height - stampHeight + 10 : 10;
-    const rectY = height >= stampHeight ? height - stampHeight : 0;
+    // Configuración del sello negro
+    const stampHeight = Math.min(170, height); // si la imagen es muy pequeña
+    const rectY = height - stampHeight;
+    const padding = 10;
 
+    // Dibujar rectángulo negro semitransparente
     ctx.globalAlpha = 0.6;
     ctx.fillStyle = '#000';
-    ctx.fillRect(10, rectY, width - 20, stampHeight);
+    ctx.fillRect(padding, rectY, width - padding * 2, stampHeight);
     ctx.globalAlpha = 1;
 
+    // Configuración de texto
     ctx.fillStyle = '#fff';
-    ctx.font = '20px sans-serif';
+    ctx.font = '20px monospace'; // fuente segura por defecto en Node
     ctx.textBaseline = 'top';
 
     const lines = text.split('\n');
     const lineHeight = 22;
     lines.forEach((line, i) => {
-      const y = textStartY + i * lineHeight;
-      ctx.fillText(line, 20, y);
+      const y = rectY + padding + i * lineHeight;
+      ctx.fillText(line, padding * 2, y); // margen desde el borde
     });
+
     console.log('Finished drawing text');
 
-    // Convertir Buffer a Uint8Array para NextResponse
+    // Convertir Buffer a ArrayBuffer para NextResponse
     const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
     const outputArrayBuffer = Uint8Array.from(outputBuffer).buffer;
 
