@@ -135,15 +135,13 @@ ${now.toLocaleString('es-CL')}`;
           <TouchableOpacity
             key={value}
             onPress={() => onSelectOption(value)}
-            className={`flex-1 items-center rounded-xl py-2 ${
-              selectedOption === value
-                ? 'border-[#FFCD00] bg-sky-300'
-                : 'border border-gray-300 bg-general-800'
-            }`}>
-            <Text
-              className={`font-JakartaMedium text-base ${
-                selectedOption === value ? 'text-black' : 'text-white'
+            className={`flex-1 items-center rounded-xl py-2 ${selectedOption === value
+              ? 'border-[#FFCD00] bg-sky-300'
+              : 'border border-gray-300 bg-general-800'
               }`}>
+            <Text
+              className={`font-JakartaMedium text-base ${selectedOption === value ? 'text-black' : 'text-white'
+                }`}>
               {optLabel}
             </Text>
           </TouchableOpacity>

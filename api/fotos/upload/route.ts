@@ -68,7 +68,19 @@ export async function POST(req: Request) {
             }
         }
 
-        return NextResponse.json({ ok: true, saved });
+        // Construir URLs públicas para las imágenes guardadas.
+        // Preferir variable de entorno PHOTO_BASE_URL, si no usar un host por defecto.
+        const defaultBase = process.env.PHOTO_BASE_URL || 'http://165.227.14.82/uploads';
+        const baseUrl = (process.env.PHOTO_BASE_URL || defaultBase).replace(/\/$/, '');
+
+        const urls = saved.map(s => `${baseUrl}/${s.filename}`);
+
+        // Si solo se guardó un archivo, devolver una cadena con la URL (compatibilidad con cliente actual).
+        if (urls.length === 1) {
+            return NextResponse.json(urls[0]);
+        }
+
+        return NextResponse.json(urls);
     } catch (err: any) {
         console.error('Upload error', err);
         return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
