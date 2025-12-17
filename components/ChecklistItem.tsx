@@ -7,6 +7,33 @@ import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import { checklistOptions } from '@/constants';
 import { BASE_URL } from '@/lib/fetch';
 
+// Función para convertir ArrayBuffer a base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  // Usar btoa si está disponible, sino una implementación simple
+  if (typeof btoa !== 'undefined') {
+    return btoa(binary);
+  }
+  // Implementación simple de base64
+  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let result = '';
+  let i = 0;
+  while (i < binary.length) {
+    const a = binary.charCodeAt(i++);
+    const b = binary.charCodeAt(i++);
+    const c = binary.charCodeAt(i++);
+    result += base64Chars[a >> 2];
+    result += base64Chars[((a & 3) << 4) | (b >> 4)];
+    result += b !== undefined ? base64Chars[((b & 15) << 2) | (c >> 6)] : '=';
+    result += c !== undefined ? base64Chars[c & 63] : '=';
+  }
+  return result;
+}
+
 type Props = {
   label: string;
   selectedOption: string | null;
@@ -66,6 +93,7 @@ export default function ChecklistItem({
         type: 'image/jpeg',
       });
       formData.append('text', texto);
+      console.log('Texto a enviar:', texto);
 
       const response = await fetch(`${BASE_URL}/api/imagenes/estampar`, {
         method: 'POST',
@@ -76,7 +104,7 @@ export default function ChecklistItem({
       });
       if (!response.ok) throw new Error('Error procesando imagen en el servidor');
       const arrayBuffer = await response.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      const base64 = arrayBufferToBase64(arrayBuffer);
       const processedUri = `data:image/jpeg;base64,${base64}`;
       setPhotoUri(processedUri);
       onPhotoTaken?.(label, processedUri);
@@ -123,8 +151,8 @@ export default function ChecklistItem({
             key={value}
             onPress={() => onSelectOption(value)}
             className={`flex-1 items-center rounded-xl py-2 ${selectedOption === value
-                ? 'border-[#FFCD00] bg-sky-300'
-                : 'border border-gray-300 bg-general-800'
+              ? 'border-[#FFCD00] bg-sky-300'
+              : 'border border-gray-300 bg-general-800'
               }`}>
             <Text
               className={`font-JakartaMedium text-base ${selectedOption === value ? 'text-black' : 'text-white'

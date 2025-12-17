@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
   }
 
+  console.log('Text received:', text);
+
   try {
     // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -20,14 +22,19 @@ export async function POST(req: NextRequest) {
 
     const width = image.width;
     const height = image.height;
+    console.log('Image width:', width, 'height:', height);
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
     ctx.drawImage(image, 0, 0, width, height);
 
+    const stampHeight = 170;
+    const textStartY = height >= stampHeight ? height - stampHeight + 10 : 10;
+    const rectY = height >= stampHeight ? height - stampHeight : 0;
+
     ctx.globalAlpha = 0.6;
     ctx.fillStyle = '#000';
-    ctx.fillRect(10, height - 180, width - 20, 170);
+    ctx.fillRect(10, rectY, width - 20, stampHeight);
     ctx.globalAlpha = 1;
 
     ctx.fillStyle = '#fff';
@@ -35,8 +42,9 @@ export async function POST(req: NextRequest) {
     ctx.textBaseline = 'top';
 
     const lines = text.split('\n');
+    console.log('Lines:', lines);
     lines.forEach((line, i) => {
-      ctx.fillText(line, 20, height - 170 + i * 36);
+      ctx.fillText(line, 20, textStartY + i * 36);
     });
 
     // Convertir Buffer a Uint8Array para NextResponse
