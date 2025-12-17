@@ -1,40 +1,48 @@
-import { createCanvas, loadImage } from 'canvas';
-import formidable from 'formidable';
 import { NextResponse } from 'next/server';
+import { IncomingForm } from 'formidable';
+import fs from 'fs';
+import { createCanvas, loadImage } from 'canvas';
 
-export const dynamic = 'force-dynamic';
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
 export async function POST(req: Request) {
-  const form = new formidable.IncomingForm({ keepExtensions: true });
-
-  const data: { fields: any; files: any } = await new Promise((resolve, reject) => {
-    form.parse(req as any, (err, fields, files) => {
+  // Parsear formData con formidable
+  const data: any = await new Promise((resolve, reject) => {
+    const form = new IncomingForm();
+    form.parse(req, (err, fields, files) => {
       if (err) reject(err);
       else resolve({ fields, files });
     });
   });
 
-  const text = data.fields.text;
-  const file = data.files.image;
+  const file = data.files?.image;
+  const text = data.fields?.text;
 
-  if (!text || !file) {
+  if (!file || !text) {
     return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
   }
 
-  const filePath = Array.isArray(file) ? file[0].filepath : file.filepath;
-  const image = await loadImage(filePath);
+  // Leer archivo a Buffer
+  const buffer = fs.readFileSync(file.filepath);
 
+  const image = await loadImage(buffer);
   const width = image.width;
   const height = image.height;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
+  // Dibujar imagen base
   ctx.drawImage(image, 0, 0, width, height);
 
-  // Dibujar rectángulo negro
+  // Rectángulo negro semi-transparente
   const stampHeight = Math.min(170, height);
   const rectY = height - stampHeight;
   const padding = 10;
+
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = '#000';
   ctx.fillRect(padding, rectY, width - padding * 2, stampHeight);
@@ -44,16 +52,17 @@ export async function POST(req: Request) {
   ctx.fillStyle = '#fff';
   ctx.font = '20px monospace';
   ctx.textBaseline = 'top';
+
   const lines = text.split('\n');
   const lineHeight = 22;
   lines.forEach((line, i) => {
-    ctx.fillText(line, padding * 2, rectY + padding + i * lineHeight);
+    const y = rectY + padding + i * lineHeight;
+    ctx.fillText(line, padding * 2, y);
   });
 
   const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
-  const outputArrayBuffer = Uint8Array.from(outputBuffer).buffer;
 
-  return new NextResponse(outputArrayBuffer, {
+  return new NextResponse(outputBuffer, {
     status: 200,
     headers: { 'Content-Type': 'image/jpeg' },
   });
