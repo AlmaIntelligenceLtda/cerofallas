@@ -36,16 +36,20 @@ export async function POST(req: NextRequest) {
     ctx.fillStyle = '#000';
     ctx.fillRect(10, rectY, width - 20, stampHeight);
     ctx.globalAlpha = 1;
+    console.log('Drew rect at', rectY, 'height', stampHeight);
 
     ctx.fillStyle = '#fff';
-    ctx.font = '32px Arial';
+    ctx.font = '32px sans-serif';
     ctx.textBaseline = 'top';
 
     const lines = text.split('\n');
     console.log('Lines:', lines);
     lines.forEach((line, i) => {
-      ctx.fillText(line, 20, textStartY + i * 36);
+      const y = textStartY + i * 36;
+      ctx.fillText(line, 20, y);
+      console.log('Drew line', i, 'at y=', y, 'text:', line);
     });
+    console.log('Finished drawing text');
 
     // Convertir Buffer a Uint8Array para NextResponse
     const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
