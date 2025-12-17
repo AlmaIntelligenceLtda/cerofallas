@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Convertir Buffer a Uint8Array para NextResponse
-    const buffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
-    const arrayBuffer = Uint8Array.from(buffer).buffer;
+    const outputBuffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+    const outputArrayBuffer = Uint8Array.from(outputBuffer).buffer;
 
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(outputArrayBuffer, {
       status: 200,
       headers: { 'Content-Type': 'image/jpeg' },
     });
