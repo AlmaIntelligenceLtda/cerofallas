@@ -1,5 +1,5 @@
-import { neon } from "@neondatabase/serverless";
-import { clerkClient } from "@clerk/clerk-sdk-node";
+import { clerkClient } from '@clerk/clerk-sdk-node';
+import { neon } from '@neondatabase/serverless';
 
 export async function POST(request: Request) {
   try {
@@ -7,10 +7,7 @@ export async function POST(request: Request) {
     const { name, email, clerkId } = await request.json();
 
     if (!name || !email || !clerkId) {
-      return Response.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+      return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // 1. Crear usuario en base de datos
@@ -40,7 +37,7 @@ export async function POST(request: Request) {
       status: 201,
     });
   } catch (error) {
-    console.error("Error creating user:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error creating user:', error);
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

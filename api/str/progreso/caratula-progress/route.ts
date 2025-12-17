@@ -1,27 +1,19 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from '@neondatabase/serverless';
 
 export async function POST(req: Request) {
-    const { userId, siteName, formData } = await req.json();
+  const { userId, siteName, formData } = await req.json();
 
-    if (!userId || !siteName) {
-        return Response.json({ error: "Faltan datos obligatorios" }, { status: 400 });
-    }
+  if (!userId || !siteName) {
+    return Response.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
+  }
 
-    const {
-        siteId,
-        direccion,
-        nombreIc,
-        latitudGps,
-        longitudGps,
-        celularIc,
-    } = formData;
+  const { siteId, direccion, nombreIc, latitudGps, longitudGps, celularIc } = formData;
 
-    const completo =
-        !!(siteId && nombreIc && direccion && latitudGps && longitudGps && celularIc);
+  const completo = !!(siteId && nombreIc && direccion && latitudGps && longitudGps && celularIc);
 
-    const sql = neon(`${process.env.DATABASE_URL}`);
+  const sql = neon(`${process.env.DATABASE_URL}`);
 
-    await sql`
+  await sql`
         INSERT INTO str_progreso (
             user_id, form_tipo, form_id, titulo, form_data, completo, actualizado_en
         )
@@ -36,5 +28,5 @@ export async function POST(req: Request) {
             actualizado_en = NOW();
     `;
 
-    return Response.json({ success: true });
+  return Response.json({ success: true });
 }

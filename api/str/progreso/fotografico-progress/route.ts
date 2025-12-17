@@ -1,19 +1,19 @@
-import { neon } from "@neondatabase/serverless";
-import axios from "axios";
+import { neon } from '@neondatabase/serverless';
+import axios from 'axios';
 
-const PHOTO_SERVER = process.env.PHOTO_SERVER || "http://165.227.14.82";
+const PHOTO_SERVER = process.env.PHOTO_SERVER || 'http://165.227.14.82';
 
 export async function POST(req: Request) {
   const formData = await req.formData();
 
-  const userId = formData.get("userId")?.toString();
-  const formDataRaw = formData.get("formData")?.toString();
-  const formId = formData.get("formId")?.toString() || "-1";
+  const userId = formData.get('userId')?.toString();
+  const formDataRaw = formData.get('formData')?.toString();
+  const formId = formData.get('formId')?.toString() || '-1';
 
   if (!userId || !formDataRaw) {
-    return new Response(JSON.stringify({ error: "Faltan datos obligatorios" }), {
+    return new Response(JSON.stringify({ error: 'Faltan datos obligatorios' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -27,36 +27,31 @@ export async function POST(req: Request) {
   const folderName = `fotografico_draft_${Date.now()}`;
   const newPhotos: Record<string, string> = {};
 
-  console.log("📩 FORM DATA ENTRANTE:");
+  console.log('📩 FORM DATA ENTRANTE:');
   for (const entry of formData.entries()) {
     const value = entry[1];
-    const isFile = typeof value === "object" && "name" in value;
+    const isFile = typeof value === 'object' && 'name' in value;
     console.log(`   • ${entry[0]}: ${isFile ? `[File] ${value.name}` : value}`);
   }
 
   // 🖼️ Procesar fotos nuevas
   for (const [key, value] of formData.entries()) {
-    if (typeof value === "object" && "arrayBuffer" in value) {
+    if (typeof value === 'object' && 'arrayBuffer' in value) {
       const file = value as File;
       const buffer = Buffer.from(await file.arrayBuffer());
 
       const uploadForm = new FormData();
-      uploadForm.append("folderName", folderName);
-      uploadForm.append("imagen", new Blob([buffer], { type: file.type }), file.name);
+      uploadForm.append('folderName', folderName);
+      uploadForm.append('imagen', new Blob([buffer], { type: file.type }), file.name);
 
       try {
-
-        const uploadResp = await axios.post(
-          `${PHOTO_SERVER}/api/fotos/upload`,
-          uploadForm,
-          {
-            maxBodyLength: Infinity,
-          }
-        );
+        const uploadResp = await axios.post(`${PHOTO_SERVER}/api/fotos/upload`, uploadForm, {
+          maxBodyLength: Infinity,
+        });
 
         const url = uploadResp.data;
         console.log(`✅ URL recibida:`, url);
-        if (typeof url === "string" && url.startsWith("http")) {
+        if (typeof url === 'string' && url.startsWith('http')) {
           newPhotos[key] = url;
         } else {
           console.warn(`⚠️ Respuesta inesperada del servidor:`, url);
@@ -75,14 +70,14 @@ export async function POST(req: Request) {
       WHERE user_id = ${userId} AND form_tipo = 'fotografico' AND form_id = -1;
     `;
     const raw = previous[0]?.photos;
-    if (typeof raw === "string") {
+    if (typeof raw === 'string') {
       prevPhotos = JSON.parse(raw);
-    } else if (typeof raw === "object" && raw !== null) {
+    } else if (typeof raw === 'object' && raw !== null) {
       prevPhotos = raw;
     }
-    console.log("🗂️ Fotos previas recuperadas:", prevPhotos);
+    console.log('🗂️ Fotos previas recuperadas:', prevPhotos);
   } catch (err) {
-    console.error("⚠️ Error consultando fotos anteriores:", err);
+    console.error('⚠️ Error consultando fotos anteriores:', err);
   }
 
   // ✅ Combinar fotos previas + nuevas
@@ -90,17 +85,19 @@ export async function POST(req: Request) {
 
   // 🧠 Determinar completitud
   const observaciones = parsedFormData?.observaciones?.trim();
-  const respuestas = Object.keys(parsedFormData).filter(k => parsedFormData[k] && k !== "observaciones");
-  const fotosAgregadas = Object.keys(finalPhotos).filter(k => finalPhotos[k]);
+  const respuestas = Object.keys(parsedFormData).filter(
+    (k) => parsedFormData[k] && k !== 'observaciones'
+  );
+  const fotosAgregadas = Object.keys(finalPhotos).filter((k) => finalPhotos[k]);
   const completo = !!observaciones && respuestas.length > 5 && fotosAgregadas.length > 5;
 
-  console.log("📦 Guardando con los siguientes datos:");
-  console.log("   • user_id:", userId);
-  console.log("   • form_id: -1");
-  console.log("   • completitud:", completo);
-  console.log("   • respuestas:", respuestas.length);
-  console.log("   • fotos nuevas:", Object.keys(newPhotos).length);
-  console.log("   • finalPhotos:", finalPhotos);
+  console.log('📦 Guardando con los siguientes datos:');
+  console.log('   • user_id:', userId);
+  console.log('   • form_id: -1');
+  console.log('   • completitud:', completo);
+  console.log('   • respuestas:', respuestas.length);
+  console.log('   • fotos nuevas:', Object.keys(newPhotos).length);
+  console.log('   • finalPhotos:', finalPhotos);
 
   try {
     const result = await neon(process.env.DATABASE_URL!)`
@@ -119,7 +116,7 @@ export async function POST(req: Request) {
       RETURNING id, form_id;
     `;
 
-    console.log("✅ Guardado exitoso. ID:", result[0]?.id, "FORM_ID:", result[0]?.form_id);
+    console.log('✅ Guardado exitoso. ID:', result[0]?.id, 'FORM_ID:', result[0]?.form_id);
 
     return new Response(
       JSON.stringify({
@@ -129,14 +126,14 @@ export async function POST(req: Request) {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("❌ Error al guardar en str_progreso:", error);
-    return new Response(JSON.stringify({ error: "Error interno" }), {
+    console.error('❌ Error al guardar en str_progreso:', error);
+    return new Response(JSON.stringify({ error: 'Error interno' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }

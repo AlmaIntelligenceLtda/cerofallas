@@ -1,61 +1,55 @@
-import formidable from 'formidable';
 import { createCanvas, loadImage } from 'canvas';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    const form = new formidable.IncomingForm();
+  const formData = await req.formData();
+  const file = formData.get('image') as File;
+  const text = formData.get('text') as string;
 
-    // formidable parse espera Node.js request, usamos req.body como stream
-    const data = await new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-        form.parse(req as any, (err, fields, files) => {
-            if (err) reject(err);
-            else resolve({ fields, files });
-        });
-    });
+  if (!file || !text) {
+    return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
+  }
 
-    try {
-        const file = data.files.image;
-        const text = data.fields.text as string;
+  // Convert File to Buffer
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const image = await loadImage(buffer);
 
-        if (!file || !text) {
-            return NextResponse.json({ error: 'Missing image or text' }, { status: 400 });
-        }
+  const width = image.width;
+  const height = image.height;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
 
-        const filePath = Array.isArray(file) ? file[0].filepath : (file as formidable.File).filepath;
-        const image = await loadImage(filePath);
+  ctx.drawImage(image, 0, 0, width, height);
 
-        const width = image.width;
-        const height = image.height;
-        const canvas = createCanvas(width, height);
-        const ctx = canvas.getContext('2d');
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(10, height - 180, width - 20, 170);
+  ctx.globalAlpha = 1;
 
-        ctx.drawImage(image, 0, 0, width, height);
+  ctx.fillStyle = '#fff';
+  ctx.font = '32px Arial';
+  ctx.textBaseline = 'top';
 
-        ctx.globalAlpha = 0.6;
-        ctx.fillStyle = '#000';
-        ctx.fillRect(10, height - 180, width - 20, 170);
-        ctx.globalAlpha = 1;
+  const lines = text.split('\n');
+  lines.forEach((line, i) => {
+    ctx.fillText(line, 20, height - 170 + i * 36);
+  });
 
-        ctx.fillStyle = '#fff';
-        ctx.font = '32px Arial';
-        ctx.textBaseline = 'top';
+  // Convertir Buffer a Uint8Array para NextResponse
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+  const arrayBuffer = Uint8Array.from(buffer).buffer;
 
-        const lines = text.split('\n');
-        lines.forEach((line, i) => {
-            ctx.fillText(line, 20, height - 170 + i * 36);
-        });
-
-        // Convertir Buffer a Uint8Array para NextResponse
-        const buffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
-        const arrayBuffer = Uint8Array.from(buffer).buffer;
-
-        return new NextResponse(arrayBuffer, {
-            status: 200,
-            headers: { 'Content-Type': 'image/jpeg' },
-        });
-    } catch (e: any) {
-        return NextResponse.json({ error: 'Error processing image', details: e.message }, { status: 500 });
-    }
+  return new NextResponse(arrayBuffer, {
+    status: 200,
+    headers: { 'Content-Type': 'image/jpeg' },
+  });
+} catch (e: any) {
+  return NextResponse.json(
+    { error: 'Error processing image', details: e.message },
+    { status: 500 }
+  );
+}
 }

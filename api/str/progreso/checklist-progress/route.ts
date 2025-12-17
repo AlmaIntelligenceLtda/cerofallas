@@ -1,17 +1,18 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from '@neondatabase/serverless';
 
 export async function POST(req: Request) {
   const { userId, titulo, formData } = await req.json();
 
   if (!userId || !titulo) {
-    return Response.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    return Response.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
   }
 
-  const completo =
-    !!(formData.codigo &&
-      formData.nombre &&
-      formData.nombreProfesional &&
-      formData.direccion);
+  const completo = !!(
+    formData.codigo &&
+    formData.nombre &&
+    formData.nombreProfesional &&
+    formData.direccion
+  );
 
   const sql = neon(`${process.env.DATABASE_URL}`);
 
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error("Error guardando progreso de checklist:", error);
-    return Response.json({ error: "Error interno" }, { status: 500 });
+    console.error('Error guardando progreso de checklist:', error);
+    return Response.json({ error: 'Error interno' }, { status: 500 });
   }
 }

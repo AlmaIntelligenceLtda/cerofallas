@@ -1,5 +1,4 @@
-const BASE_URL =
-  "http://165.227.14.82:3000"; // fallback dev
+export const BASE_URL = 'http://165.227.14.82:3000'; // fallback dev
 
 // Validación opcional
 if (!BASE_URL) {

@@ -1,17 +1,17 @@
-import { neon } from "@neondatabase/serverless";
-import axios from "axios";
+import { neon } from '@neondatabase/serverless';
+import axios from 'axios';
 
-const PHOTO_SERVER = process.env.PHOTO_SERVER || "http://165.227.14.82";
+const PHOTO_SERVER = process.env.PHOTO_SERVER || 'http://165.227.14.82';
 
 export async function POST(req: Request) {
   const formData = await req.formData();
 
-  const userId = formData.get("user_id")?.toString();
-  const progresoId = formData.get("progreso_id")?.toString();
-  const formDataRaw = formData.get("formData")?.toString();
+  const userId = formData.get('user_id')?.toString();
+  const progresoId = formData.get('progreso_id')?.toString();
+  const formDataRaw = formData.get('formData')?.toString();
 
   if (!userId || !formDataRaw) {
-    return new Response(JSON.stringify({ error: "Faltan datos obligatorios" }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Faltan datos obligatorios' }), { status: 400 });
   }
 
   const parsedFormData = JSON.parse(formDataRaw);
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   for (const entry of formData.entries()) {
     const value = entry[1];
-    const isFile = typeof value === "object" && "name" in value;
+    const isFile = typeof value === 'object' && 'name' in value;
     console.log(`   • ${entry[0]}: ${isFile ? `[File] ${value.name}` : value}`);
   }
 
@@ -31,33 +31,36 @@ export async function POST(req: Request) {
   for (let i = 0; i < keys.length; i++) {
     const campo = keys[i];
     const fotosArray = fotos[campo];
-    const campoSanitizado = campo.replace(/\s+/g, "_").toLowerCase();
+    const campoSanitizado = campo.replace(/\s+/g, '_').toLowerCase();
 
     for (let j = 0; j < fotosArray.length; j++) {
       const fieldName = `foto_${campoSanitizado}_${j}`;
       const file = formData.get(fieldName) as File;
 
-      if (file && typeof file === "object" && "arrayBuffer" in file) {
+      if (file && typeof file === 'object' && 'arrayBuffer' in file) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const uploadForm = new FormData();
 
-        uploadForm.append("folderName", folderName);
+        uploadForm.append('folderName', folderName);
         uploadForm.append(
-          "imagen",
+          'imagen',
           new Blob([buffer], { type: file.type }),
           file.name || `foto_${campoSanitizado}_${j}.jpg`
         );
 
         try {
           const resp = await axios.post(`${PHOTO_SERVER}/api/fotos/upload`, uploadForm, {
-            headers: typeof (uploadForm as any).getHeaders === "function" ? (uploadForm as any).getHeaders() : {},
+            headers:
+              typeof (uploadForm as any).getHeaders === 'function'
+                ? (uploadForm as any).getHeaders()
+                : {},
             maxBodyLength: Infinity,
           });
 
           const data = resp.data;
-          const url = typeof data === "string" ? data : data?.url;
+          const url = typeof data === 'string' ? data : data?.url;
 
-          if (url?.startsWith("http")) {
+          if (url?.startsWith('http')) {
             if (!fotosFinal[campoSanitizado]) fotosFinal[campoSanitizado] = [];
 
             fotosFinal[campoSanitizado].push({ campo: campoSanitizado, uri: url });
@@ -88,7 +91,7 @@ export async function POST(req: Request) {
         fotosPrevias = prev[0].photos;
       }
     } catch (e) {
-      console.error("⚠️ Error obteniendo fotos previas:", e);
+      console.error('⚠️ Error obteniendo fotos previas:', e);
     }
   }
 
@@ -101,11 +104,11 @@ export async function POST(req: Request) {
 
   const camposLlenos = Object.entries(parsedFormData).filter(
     ([k, v]) =>
-      k !== "fotos" &&
-      k !== "resumenMedicionesAntes" &&
-      k !== "resumenMedicionesDespues" &&
+      k !== 'fotos' &&
+      k !== 'resumenMedicionesAntes' &&
+      k !== 'resumenMedicionesDespues' &&
       v &&
-      v !== ""
+      v !== ''
   );
   const completo = camposLlenos.length >= 10 && Object.keys(fotosCombinadas).length >= 1;
 
@@ -143,8 +146,8 @@ export async function POST(req: Request) {
     const nuevoProgresoId = result[0]?.id;
     const formIdAsignado = result[0]?.form_id;
 
-    console.log("🆔 Progreso guardado con ID:", nuevoProgresoId);
-    console.log("📄 Formulario ID real:", formIdAsignado);
+    console.log('🆔 Progreso guardado con ID:', nuevoProgresoId);
+    console.log('📄 Formulario ID real:', formIdAsignado);
 
     return new Response(
       JSON.stringify({
@@ -154,14 +157,14 @@ export async function POST(req: Request) {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (err) {
-    console.error("❌ Error al guardar conectividad:", err);
-    return new Response(JSON.stringify({ error: "Error al guardar conectividad" }), {
+    console.error('❌ Error al guardar conectividad:', err);
+    return new Response(JSON.stringify({ error: 'Error al guardar conectividad' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }

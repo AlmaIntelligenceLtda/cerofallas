@@ -1,8 +1,8 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from '@neondatabase/serverless';
 
 export async function GET(_: Request, { id }: { id: string }) {
   if (!id) {
-    return Response.json({ error: "Missing user ID" }, { status: 400 });
+    return Response.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
   try {
@@ -16,9 +16,9 @@ export async function GET(_: Request, { id }: { id: string }) {
         AND form_tipo IN ('caratula', 'checklist', 'fotografico')
     `;
 
-    const caratula = result.find(r => r.form_tipo === "caratula")?.completo || false;
-    const checklist = result.find(r => r.form_tipo === "checklist")?.completo || false;
-    const fotografico = result.find(r => r.form_tipo === "fotografico")?.completo || false;
+    const caratula = result.find((r) => r.form_tipo === 'caratula')?.completo || false;
+    const checklist = result.find((r) => r.form_tipo === 'checklist')?.completo || false;
+    const fotografico = result.find((r) => r.form_tipo === 'fotografico')?.completo || false;
 
     return Response.json({
       caratula,
@@ -26,7 +26,7 @@ export async function GET(_: Request, { id }: { id: string }) {
       fotografico,
     });
   } catch (error) {
-    console.error("Error al consultar progreso STR:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error al consultar progreso STR:', error);
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

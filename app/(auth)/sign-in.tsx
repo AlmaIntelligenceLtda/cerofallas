@@ -1,4 +1,5 @@
 import { Image, ScrollView, Text, View } from 'react-native';
+
 import OAuth from '@/components/OAuth';
 import { images } from '@/constants';
 

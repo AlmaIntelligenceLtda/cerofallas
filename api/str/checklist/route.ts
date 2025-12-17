@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from '@neondatabase/serverless';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   } = body;
 
   if (!userId || !codigo || !nombre || !nombreProfesional) {
-    return Response.json({ error: "Faltan campos obligatorios" }, { status: 400 });
+    return Response.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
   }
 
   try {
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error("Error al insertar checklist:", error);
-    return Response.json({ error: "Error al guardar checklist" }, { status: 500 });
+    console.error('Error al insertar checklist:', error);
+    return Response.json({ error: 'Error al guardar checklist' }, { status: 500 });
   }
 }

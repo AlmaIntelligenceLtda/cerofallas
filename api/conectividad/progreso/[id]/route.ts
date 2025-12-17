@@ -1,8 +1,8 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from '@neondatabase/serverless';
 
 export async function GET(_: Request, { id }: { id: string }) {
   if (!id) {
-    return Response.json({ error: "Missing user ID" }, { status: 400 });
+    return Response.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
   try {
@@ -16,15 +16,15 @@ export async function GET(_: Request, { id }: { id: string }) {
         AND form_tipo IN ('mantenimiento', 'fotografico')
     `;
 
-    const mantenimiento = result.find(r => r.form_tipo === "mantenimiento")?.completo || false;
-    const fotografico = result.find(r => r.form_tipo === "fotografico")?.completo || false;
+    const mantenimiento = result.find((r) => r.form_tipo === 'mantenimiento')?.completo || false;
+    const fotografico = result.find((r) => r.form_tipo === 'fotografico')?.completo || false;
 
     return Response.json({
       mantenimiento,
       fotografico,
     });
   } catch (error) {
-    console.error("Error al consultar progreso MTO:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error al consultar progreso MTO:', error);
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
