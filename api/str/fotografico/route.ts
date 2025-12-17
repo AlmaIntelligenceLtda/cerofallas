@@ -76,9 +76,6 @@ export async function POST(req: Request) {
   const observaciones = parsedFormData?.observaciones?.trim();
   const todosItemsLlenos = ecebbItems.every((k) => parsedFormData[k]?.trim() !== '');
   const completo = !!observaciones && todosItemsLlenos;
-
-  console.log('esta completo? respuesta:', completo);
-
   try {
     // Insertar en str_fotografico
     const result = await sql`
