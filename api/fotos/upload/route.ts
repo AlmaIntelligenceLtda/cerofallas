@@ -4,7 +4,7 @@ import { promisify } from 'util';
 import formidable from 'formidable';
 import { NextResponse } from 'next/server';
 
-export const runtime = 'node';
+export const runtime = "nodejs";
 
 const mkdir = promisify(fs.mkdir);
 
